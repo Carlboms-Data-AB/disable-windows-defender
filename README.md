@@ -1,45 +1,54 @@
 # disable-windows-defender
 
-PowerShell tooling to temporarily disable Microsoft Defender's scanning and network
-inspection on an **isolated** machine, measure packet loss with Defender's inspection out of
-the way, and then restore everything.
+PowerShell tooling to temporarily disable Microsoft Defender's scanning/network inspection
+**and** Windows Update on an **isolated** machine — to remove their intermittent CPU spikes as
+variables in a performance test — and then restore everything.
 
-> ⚠️ **For an isolated, dedicated machine only.** Disabling Defender inspection on an
-> internet-facing machine is a real security decision. Confirm it is allowed by the
-> applicable IT policy before running it.
+> ⚠️ **For an isolated, dedicated machine only.** Disabling Defender inspection or Windows
+> Update on an internet-facing machine is a real security decision. Confirm it is allowed by
+> the applicable IT policy before running it.
 
-The tooling uses **only documented, Microsoft-supported `Set-MpPreference` switches**. It does
-*not* touch Defender's services/drivers (unsupported on clients) and does *not* attempt to
-bypass Tamper Protection.
+The Defender part uses **only documented, Microsoft-supported `Set-MpPreference` switches** — it
+does *not* touch Defender's services/drivers and does *not* bypass Tamper Protection. The
+Windows Update part uses Group Policy, service start types, and scheduled tasks; every action
+is reversible.
 
 ## Run directly (no download)
 
 Open **PowerShell as Administrator** and paste:
 
-**Disable inspection (before the test):**
+**Disable Defender inspection:**
 ```powershell
 irm https://raw.githubusercontent.com/Carlboms-Data-AB/disable-windows-defender/main/defender-perf-test.ps1 | iex
 ```
 
-**Restore everything (after the test):**
+**Disable Windows Update:**
+```powershell
+irm https://raw.githubusercontent.com/Carlboms-Data-AB/disable-windows-defender/main/disable-windows-update.ps1 | iex
+```
+
+**Restore everything (Defender + Windows Update):**
 ```powershell
 irm https://raw.githubusercontent.com/Carlboms-Data-AB/disable-windows-defender/main/restore-defender.ps1 | iex
 ```
 
 > `irm` = `Invoke-RestMethod`, `iex` = `Invoke-Expression`. PowerShell must run **elevated
-> (as Administrator)** — otherwise `Set-MpPreference` cannot write the settings.
+> (as Administrator)** — otherwise the settings cannot be written.
 
 ## Alternative: download and run as a file
 
 ```powershell
-# Disable
+# Defender: disable / disable + exclude C:\ / revert
 powershell -ExecutionPolicy Bypass -File .\defender-perf-test.ps1
-
-# Disable + exclude the whole C:\ from file scanning (optional)
 powershell -ExecutionPolicy Bypass -File .\defender-perf-test.ps1 -ExcludeSystemDrive
-
-# Restore (same as the restore script)
 powershell -ExecutionPolicy Bypass -File .\defender-perf-test.ps1 -Revert
+
+# Windows Update: disable / revert
+powershell -ExecutionPolicy Bypass -File .\disable-windows-update.ps1
+powershell -ExecutionPolicy Bypass -File .\disable-windows-update.ps1 -Revert
+
+# Restore both at once
+powershell -ExecutionPolicy Bypass -File .\restore-defender.ps1
 ```
 
 ## Files
@@ -47,7 +56,8 @@ powershell -ExecutionPolicy Bypass -File .\defender-perf-test.ps1 -Revert
 | File | Description |
 |------|-------------|
 | `defender-perf-test.ps1` | Disables realtime scanning, Network Protection, and all network parsers (UDP datagram, TLS, HTTP, DNS, FTP, SMTP, SSH, RDP, inbound filtering). Supports `-Revert` and `-ExcludeSystemDrive`. |
-| `restore-defender.ps1` | Standalone restore — turns everything back on and removes any `C:\` exclusion. |
+| `disable-windows-update.ps1` | Disables Windows Update: `NoAutoUpdate` policy, services (`wuauserv`, `UsoSvc`, `BITS`, `DoSvc`), the self-healing `WaaSMedicSvc` (takes ownership of its key), and the UpdateOrchestrator/WindowsUpdate scheduled tasks. Supports `-Revert`. |
+| `restore-defender.ps1` | Restores **both** Defender and Windows Update to normal in one run. |
 
 ## Reading the result
 
