@@ -1,75 +1,75 @@
 # disable-windows-defender
 
-PowerShell-verktyg för att tillfälligt stänga av Microsoft Defenders skanning och
-nätverksinspektion på en **isolerad** GigE Vision-kameravärd, mäta paketförlust utan
-Defenders inspektion i vägen, och sedan återställa allt.
+PowerShell tooling to temporarily disable Microsoft Defender's scanning and network
+inspection on an **isolated** machine, measure packet loss with Defender's inspection out of
+the way, and then restore everything.
 
-> ⚠️ **Endast för en isolerad, dedikerad maskin.** Att stänga av Defender-inspektion på en
-> internetansluten dator är ett verkligt säkerhetsbeslut. Kontrollera att det är tillåtet
-> enligt gällande IT-policy innan du kör det.
+> ⚠️ **For an isolated, dedicated machine only.** Disabling Defender inspection on an
+> internet-facing machine is a real security decision. Confirm it is allowed by the
+> applicable IT policy before running it.
 
-Verktyget använder **endast dokumenterade, Microsoft-stödda `Set-MpPreference`-switchar**.
-Det rör *inte* Defenders tjänster/drivrutiner (osupporterat på klienter) och försöker *inte*
-kringgå Tamper Protection.
+The tooling uses **only documented, Microsoft-supported `Set-MpPreference` switches**. It does
+*not* touch Defender's services/drivers (unsupported on clients) and does *not* attempt to
+bypass Tamper Protection.
 
-## Kör direkt (utan att ladda ner)
+## Run directly (no download)
 
-Öppna **PowerShell som administratör** och klistra in:
+Open **PowerShell as Administrator** and paste:
 
-**Stäng av inspektion (inför testet):**
+**Disable inspection (before the test):**
 ```powershell
 irm https://raw.githubusercontent.com/Carlboms-Data-AB/disable-windows-defender/main/defender-perf-test.ps1 | iex
 ```
 
-**Återställ allt (efter testet):**
+**Restore everything (after the test):**
 ```powershell
 irm https://raw.githubusercontent.com/Carlboms-Data-AB/disable-windows-defender/main/restore-defender.ps1 | iex
 ```
 
-> `irm` = `Invoke-RestMethod`, `iex` = `Invoke-Expression`. PowerShell måste köras
-> **förhöjt (som administratör)** — annars kan inte `Set-MpPreference` skriva inställningarna.
+> `irm` = `Invoke-RestMethod`, `iex` = `Invoke-Expression`. PowerShell must run **elevated
+> (as Administrator)** — otherwise `Set-MpPreference` cannot write the settings.
 
-## Alternativ: ladda ner och kör som fil
+## Alternative: download and run as a file
 
 ```powershell
-# Stäng av
+# Disable
 powershell -ExecutionPolicy Bypass -File .\defender-perf-test.ps1
 
-# Stäng av + exkludera hela C:\ från filskanning (valfritt)
+# Disable + exclude the whole C:\ from file scanning (optional)
 powershell -ExecutionPolicy Bypass -File .\defender-perf-test.ps1 -ExcludeSystemDrive
 
-# Återställ (samma som restore-skriptet)
+# Restore (same as the restore script)
 powershell -ExecutionPolicy Bypass -File .\defender-perf-test.ps1 -Revert
 ```
 
-## Filer
+## Files
 
-| Fil | Beskrivning |
-|-----|-------------|
-| `defender-perf-test.ps1` | Stänger av realtidsskanning, Network Protection och alla nätverksparsrar (UDP-datagram, TLS, HTTP, DNS, FTP, SMTP, SSH, RDP, inbound filtering). Har `-Revert` och `-ExcludeSystemDrive`. |
-| `restore-defender.ps1` | Fristående återställning — slår på allt igen och tar bort en ev. `C:\`-exkludering. |
+| File | Description |
+|------|-------------|
+| `defender-perf-test.ps1` | Disables realtime scanning, Network Protection, and all network parsers (UDP datagram, TLS, HTTP, DNS, FTP, SMTP, SSH, RDP, inbound filtering). Supports `-Revert` and `-ExcludeSystemDrive`. |
+| `restore-defender.ps1` | Standalone restore — turns everything back on and removes any `C:\` exclusion. |
 
-## Så tolkar du resultatet
+## Reading the result
 
-Efter körning: titta på **CONFIGURATION**-blocket i utskriften, inte på om `MsMpEng.exe`
-fortfarande syns i Task Manager. Det du vill se är:
+After running, look at the **CONFIGURATION** block in the output, not at whether
+`MsMpEng.exe` still appears in Task Manager. What you want to see is:
 
 ```
 EnableNetworkProtection   = Disabled
-DisableDatagramProcessing = True     # UDP-inspektionen avstängd
+DisableDatagramProcessing = True     # UDP inspection off
 DisableTlsParsing         = True
 DisableHttpParsing        = True
 ...
 ```
 
-Är paketförlusten oförändrad efter det har du i praktiken eliminerat Defenders
-nätverksinspektion som huvudorsak — även om `MsMpEng.exe` fortfarande ligger kvar som process.
+If packet loss is unchanged after that, you have effectively ruled out Defender's network
+inspection as the primary cause — even though `MsMpEng.exe` may still be running as a process.
 
-## Om Tamper Protection
+## About Tamper Protection
 
-Är Tamper Protection **på** (standard på Windows 11 Pro) kan ändringar av realtidsskydd,
-beteendeövervakning, IOAV och `C:\`-exkludering *se ut* att lyckas men ändå ignoreras.
-Nätverksparser-switcharna försöks ändå. Vill du att antivirus-inställningarna verkligen ska
-ta effekt: stäng av Tamper Protection manuellt i **Windows Security → Virus- och hotskydd →
-Hantera inställningar**. Ingen lokal, stödd metod kan stänga av Tamper Protection via skript
-på en fristående maskin.
+If Tamper Protection is **on** (the default on Windows 11 Pro), changes to realtime
+protection, behavior monitoring, IOAV and the `C:\` exclusion may *appear* to succeed but
+still be ignored. The network-parser switches are attempted regardless. To make the antivirus
+settings actually take effect, turn Tamper Protection off manually in **Windows Security →
+Virus & threat protection → Manage settings**. No local, supported method can disable Tamper
+Protection via script on a standalone machine.
