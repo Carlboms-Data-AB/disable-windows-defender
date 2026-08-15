@@ -65,6 +65,20 @@ DisableHttpParsing        = True
 If packet loss is unchanged after that, you have effectively ruled out Defender's network
 inspection as the primary cause — even though `MsMpEng.exe` may still be running as a process.
 
+## Verify (also after a reboot)
+
+The `Set-MpPreference` settings persist across reboots, so you do not need to re-run the
+script after every boot. To confirm the state is still in effect, run:
+
+```powershell
+Get-MpComputerStatus | Select-Object RealTimeProtectionEnabled, NISEnabled, IsTamperProtected
+Get-MpPreference   | Select-Object DisableDatagramProcessing, EnableNetworkProtection
+```
+
+You want to see `RealTimeProtectionEnabled = False` and `DisableDatagramProcessing = True`
+(and `EnableNetworkProtection = 0`, i.e. Disabled). If Windows has turned realtime protection
+back on after a Defender platform/signature update, just run `defender-perf-test.ps1` again.
+
 ## About Tamper Protection
 
 If Tamper Protection is **on** (the default on Windows 11 Pro), changes to realtime
