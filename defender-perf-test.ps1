@@ -52,7 +52,7 @@ function Write-Head($text) {
 
 # Wrap Set-MpPreference so a single blocked setting (e.g. Tamper Protection) does not abort the run.
 function Set-Pref {
-    param([hashtable], [string])
+    param([hashtable]$Setting, [string]$What)
     try {
         Set-MpPreference @Setting -ErrorAction Stop
         Write-Host ("  [ok]   {0}" -f $What) -ForegroundColor Green

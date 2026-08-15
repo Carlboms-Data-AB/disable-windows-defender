@@ -33,7 +33,7 @@ function Write-Head($text) {
 }
 
 function Set-Pref {
-    param([hashtable], [string])
+    param([hashtable]$Setting, [string]$What)
     try {
         Set-MpPreference @Setting -ErrorAction Stop
         Write-Host ("  [ok]   {0}" -f $What) -ForegroundColor Green
