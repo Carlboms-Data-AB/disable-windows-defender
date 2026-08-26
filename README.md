@@ -19,17 +19,17 @@ Open **PowerShell as Administrator** and paste:
 
 **Disable Defender inspection:**
 ```powershell
-irm https://raw.githubusercontent.com/Carlboms-Data-AB/disable-windows-defender/main/defender-perf-test.ps1 | iex
+irm https://raw.githubusercontent.com/carlbomsdata/disable-windows-defender/main/defender-perf-test.ps1 | iex
 ```
 
 **Disable Windows Update:**
 ```powershell
-irm https://raw.githubusercontent.com/Carlboms-Data-AB/disable-windows-defender/main/disable-windows-update.ps1 | iex
+irm https://raw.githubusercontent.com/carlbomsdata/disable-windows-defender/main/disable-windows-update.ps1 | iex
 ```
 
 **Restore everything (Defender + Windows Update):**
 ```powershell
-irm https://raw.githubusercontent.com/Carlboms-Data-AB/disable-windows-defender/main/restore-defender.ps1 | iex
+irm https://raw.githubusercontent.com/carlbomsdata/disable-windows-defender/main/restore-defender.ps1 | iex
 ```
 
 > `irm` = `Invoke-RestMethod`, `iex` = `Invoke-Expression`. PowerShell must run **elevated
